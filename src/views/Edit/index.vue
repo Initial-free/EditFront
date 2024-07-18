@@ -1,17 +1,52 @@
 <template>
   <div class="EditMain" ref="filecont" @mousedown="notsee()" >
-    <ul @mousedown="see()" v-show="visiblemenu" :style="{ left: position.left + 'px', top: position.top + 'px', display: (visiblemenu ? 'grid' : 'none') }" class="contextmenu">
-        <div class="item"  @click="polish()">
-            <el-icon><Brush /></el-icon>
-            润色
-        </div>
-        <div class="item" @click="continuation()">
-            <el-icon><EditPen /></el-icon>
-            续写
-        </div>
-    </ul>
-    <div class="lefttools"></div>
+    <div class="lefttools">
+      <p class="text-example">OCR识别</p>
+      <div class="uploadimage">
+        <p class="commodity_img">
+              <el-upload
+                :on-success="handleSuccess"
+                list-type="picture-card"
+                :auto-upload="false"
+                :on-change="handleChanges"
+                :before-remove="beforeRemove"
+                :on-preview="handlePictureCardPreview"
+                :file-list="fileList "
+                multiple
+                limit="1"
+                name="img"
+              >
+                <el-icon class="avatar-uploader-icon">
+                  <Plus />
+                </el-icon>
+              </el-upload>
+          </p>
+        <el-dialog v-model="dialogVisible">
+          <img w-full class="imageshow" :src="dialogImageUrl" alt="Preview Image" />
+        </el-dialog>
+
+      </div>
+      <hr>
+      <el-button type="primary" @click="uploadimg">上传图片</el-button>
+      <div class=" showwindow" v-bind:disabled="disabled" id="showwindow">
+      </div>
+    </div>  
     <div class="editor">
+      <div>
+        <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
+        <button @click="polish()"
+          :class="{ 'is-active': editor.isActive('润色') }">
+          <el-icon><Brush /></el-icon>
+          优化
+        </button>
+        <button @click="continuation()"
+          :class="{ 'is-active': editor.isActive('续写') }">
+          <el-icon><EditPen /></el-icon>
+          续写
+        </button>
+        </bubble-menu>
+        <editor-content :editor="editor" />
+      </div>
       <div class="editorcard" >
         <div class="toptools">
           <EditorMenu :editor="editor" />
@@ -25,27 +60,30 @@
           style="padding: 8px;  overflow-y: auto;"
           :editor="editor"
         />
+        <p></p>
         </div>
-       
+        
         <div class="bottomcount">
           字数统计:
           {{ editor?.storage.characterCount.characters() }}
         </div>
       </div>
     </div>
-    
     <div class="righttools">
       <Outline></Outline>
     </div>
   </div>
   </template>
-  <script lang="ts" setup>
+  <script setup lang="ts" >
   import {Brush,EditPen,} from '@element-plus/icons-vue'
-  import { defineComponent, onMounted, onBeforeUnmount, ref,watch } from 'vue';
+  import { defineComponent, onMounted, onBeforeUnmount, ref,watch,reactive } from 'vue';
   import { Editor, EditorContent, useEditor, BubbleMenu  } from '@tiptap/vue-3';
   import { storeToRefs } from 'pinia'
   import Underline from '@tiptap/extension-underline'
-  // 列表
+ // 列表
+  // import TableRow from '@tiptap/extension-table-row'
+  // import TableCell from '@tiptap/extension-table-cell'
+  // import TableHeader from '@tiptap/extension-table-header'
   import ListItem from '@tiptap/extension-list-item'
   import OrderedList from '@tiptap/extension-ordered-list'
   import BulletList from '@tiptap/extension-bullet-list'
@@ -68,12 +106,17 @@
     // 使用Pinia
   import { useEditorStore } from '@/store'
   import EditorMenu from './EditorMenu/index.vue'
+  import ShowWindow from './ShowWindow/index.vue'
   import { defineStore } from 'pinia'
   import { ElMessage } from 'element-plus';
-
+  
 
   const lowlight = createLowlight()
   lowlight.register({ html, ts, css, js })
+    
+
+
+  onMounted(() => { });
 
     const aipolish = ref("")
     const filecont = ref(null);
@@ -87,67 +130,67 @@
     var hisstring:any;
     var selection:any;
     //进行润色的函数
+  import axios from 'axios'
+  import { table } from 'console';
+    //进行润色的函数
     const polish=()=>{
-          ailoading.value=true
-          visiblemenu.value = false;
-          let formData = new FormData();
-          formData.append("username","12345");
-          formData.append("key","xxxxxxx");
-          formData.append("cont",hisstring);
-          let url = 'http://127.0.0.1:5000/getpolish' //访问后端接口的url
-          let method = 'post'
-          axios({
-            method,
-            url,
-            data: formData,
-          }).then(res => {
-            console.log(res.data);
-            var tpcard1={"title":"ai辅助评审","cont":hisstring,"review":res.data}
-            ailist.value.push(tpcard1)
-            navigator.clipboard.writeText(res.data)
-            showMessage()
-            ailoading.value=false
-          });
+      visiblemenu.value = false;
+      let formData = new FormData();
+      if(hisstring==''){
+        alert("不能对空的内容进行润色")
       }
-    //进行aireview
+      else{
+        formData.append("username","123456");
+        formData.append("key","01a28a5bdc72092bcf43dd4258c58b05855368f4");
+        formData.append("cont",hisstring);
+        let url = 'http://127.0.0.1:5000/getpolish' //访问后端接口的url
+        let method = 'post'
+        axios({
+          method,
+          url,
+          data: formData,
+        }).then(res => {
+          // alert(res.data.answer)
+          console.log(res.data.answer);
+          document.getElementById("showwindow").innerText=res.data.answer;
+        });
+      }
+      
+    }
+    //进行aiaireview
     const continuation=()=>{
-          ailoading.value=true
-          visiblemenu.value = false;
-          let formData = new FormData();
-          formData.append("username","12345");
-          formData.append("key","xxxxxxx");
-          formData.append("cont",hisstring);
-          let url = 'http://127.0.0.1:5000/getpolish' //访问后端接口的url
-          let method = 'post'
-          axios({
-            method,
-            url,
-            data: formData,
-          }).then(res => {
-            console.log(res.data);
-          
-            showMessage()
-            ailoading.value=false
-          });
+      visiblemenu.value = false;
+      let formData = new FormData();
+      if(hisstring==''){
+        alert("不能对空的内容进行润色")
       }
+      else{
+        formData.append("username","123456");
+        formData.append("key","01a28a5bdc72092bcf43dd4258c58b05855368f4");
+        formData.append("cont",hisstring);
+        let url = 'http://127.0.0.1:5000/getcontinuation' //访问后端接口的url
+        let method = 'post'
+        axios({
+          method,
+          url,
+          data: formData,
+        }).then(res => {
+          // alert(res.data.answer)
+          console.log(res.data.answer);
+          document.getElementById("showwindow").innerText=res.data.answer;
+        });
+      }
+    }
     // 获取选中的文字
     const selecttext= (e:MouseEvent)=>{
             selection = window.getSelection();
             if(selection!=null&&hisstring!=selection){
               var content = selection.toString();
-              if(content!=""){
-                  var rect = filecont.value.getBoundingClientRect();
-                  visiblemenu.value = true
-                  // alert(e.clientY)
-                  // alert(e.clientX)
-                  position.value.top =  e.clientY;
-                  position.value.left =e.clientX;
-                  hisstring=content
-                }
-              // alert(content)
-            }
-            else{
-              hisstring=""
+              var rect = filecont.value.getBoundingClientRect();
+              visiblemenu.value = true
+              position.value.top =  e.clientY;
+              position.value.left =e.clientX;
+              hisstring=content
             }
       }
     //鼠标移动
@@ -208,7 +251,7 @@
       }
     // 使用ref创建可变的响应式引用
     // 编辑器初始化
-    const editor = useEditor({
+const editor = useEditor({
           content: ``,
           extensions: [
           StarterKit.configure({
@@ -226,7 +269,8 @@
             ListItem,
             CharacterCount.configure({
             limit: 10000
-          })
+          }),
+          
           ],
           onUpdate({ edit }) {
             loadHeadings()
@@ -239,6 +283,100 @@
           injectCSS: false,
 
       })
+      import { ref } from 'vue'
+    import { ElMessage } from 'element-plus';
+    import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue'
+  
+    import type { UploadFile } from 'element-plus'
+  
+    const dialogImageUrl = ref('')
+    const dialogVisible = ref(false)
+    const disabled = ref(false)
+  
+    const handleRemove = (file: UploadFile) => {
+      file.url = '';
+      file=null;
+    }
+  
+    const handlePictureCardPreview = (file: UploadFile) => {
+      dialogImageUrl.value = file.url!
+      dialogVisible.value = true
+    }
+  
+    const handleDownload = (file: UploadFile) => {
+     
+    }
+  
+    const boxdisplay = ref("show_box");
+  
+    const upload_btn = ref(false);
+    const fileList = ref([]);
+    const handleSuccess = () => {
+      // 上传成功后，隐藏上传按钮
+      upload_btn.value = true;
+    };
+    const handleChanges = img => {
+      fileList.value.push(img);
+      boxdisplay.value = "hide_box";
+    };
+    import {ElMessageBox} from 'element-plus'
+import { fa } from 'element-plus/es/locale/index.mjs';
+    // 删除
+    const beforeRemove = () => {
+      const result = new Promise<void>((resolve, reject) => {
+        ElMessageBox.confirm("此操作将删除该图片, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        })
+          .then(() => {
+            boxdisplay.value = "show_box";
+            resolve();
+            fileList.value = [];
+            upload_btn.value = false;
+          })
+          .catch(() => {
+            reject(false);
+          });
+      });
+      return result;
+    };
+    const uploadimg = () => {
+      // alert("上传图片")
+      let formData = new FormData();
+        // 遍历fileList，为每个文件创建一个新的表单字段 
+      formData.append("username","12345");
+      fileList.value.forEach((file, index) => {  
+        // 假设后端期望的文件字段名为 'file[]' 以支持多文件上传  
+        // 如果后端只期望单个文件，则字段名可能只是 'file'  
+        // formData.append(`file[${index}]`, file.raw);  
+        formData.append("file",file.raw);
+        console.log(file.raw)
+      });  
+  
+      let url = 'http://127.0.0.1:5000/uploadimages' //访问后端接口的url
+      let method = 'post'
+      axios({
+          method,  
+          url,  
+          data: formData,  
+          headers: {  
+            'Content-Type': 'multipart/form-data' // 确保设置了正确的Content-Type  
+          }  
+      }).then(res => {
+        console.log(res.data);
+        alert(res.data)
+          const result = new Promise((resolve, reject) => {
+                  resolve();
+                  fileList.value = [];
+                  upload_btn.value = false;
+                  ElMessage({ message: '图片上传成功', type: 'success' });  
+                })
+                .catch(() => {
+                  reject(false);
+                });
+            });
+    }
   </script>
   <style>
   .EditMain{
@@ -247,21 +385,38 @@
     height: 100vh;
 
     display: grid;
-    grid-template-columns: 20% 60% 20%;
+    grid-template-columns: 25% 50% 25%;
   
   }
   .lefttools{
     background-color: rgb(111 118 177 / 60%);
     height: 100%;
     width: 100%;
+    display: flex; /* 开启 Flexbox 布局 */
+    flex-direction: column; /* 子元素垂直排列 */
+    align-items: center; /* 垂直居中 */
+    padding-top:0rem;
+    
+  }
+  .showwindow{
+    height: 23em;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin: 2em;
+    overflow: auto;
   }
   .righttools{
-    background-color: rgb(206 226 117);
+    background-color: rgb(207, 216, 166);
     height: 100%;
     width: 100%;
   }
   .editor{
- 
+    max-height: 45rem;
+    display: flex;
+    padding: 0.7rem;
+    flex: auto;
+    overflow-y: auto;
+    scrollbar-width: 30; 
+    scrollbar-color: #888 #f8e6e6;
   }
   .editorcard{
     position: relative;
@@ -272,15 +427,6 @@
     display: grid;
     grid-template-rows: 5% 92% 3%;
     border: 1px solid #4f5c5765;
-  }
-  .editorcard .editor{
-    position: relative;
-    width:100%;
-    height: 100%;
-    left: 0;
-    top:0;
-    display: grid;
-    grid-template-rows: 10% 90%;
   }
   .editorcard .editor{
     position: relative;
@@ -334,7 +480,6 @@
     height: 0;
     pointer-events: none;
   }
-  
   .tiptap {
     > * + * {
       margin-top: 0.75em;
@@ -354,7 +499,7 @@
       width: 100%;
       margin: 0;
       overflow: hidden;
-  
+
       td,
       th {
         min-width: 1em;
@@ -513,3 +658,46 @@
       background: rgb(229, 230, 235);
     }
   </style>
+
+<style scoped>
+    .mainbody {
+      position: relative;
+      width:100vw;
+      height: 100vh;
+      display: block;
+    }
+    .headtitle {
+      filter: drop-shadow(0 0 2em #646cffaa);
+      margin: 0;
+    }
+    </style>
+    <style lang="scss" scoped>
+    /* #在此处编写代码 */
+    .mainbody{
+      background: #76cfe5;
+    }
+    </style>
+    <style scoped>
+    .hide_box  {
+      display: none;
+    }
+    .show_box{
+      display: inline-flex;
+    }
+    .imageshow{
+      width: 100%;  
+      height: 100%;  
+      object-fit: fill; 
+    }
+    .uploadimage{
+      display: flex;           /* 使用 Flexbox 布局 */
+      justify-content: center; /* 水平居中 */
+      align-items: center;     /* 垂直居中 */
+    }
+    .text-example {
+    color: rgb(0, 0, 0); /* 设置文本颜色为红色 */
+    font-size: 25px; /* 设置文本大小为24像素 */
+    margin: 1rem;
+    }
+    </style>
+    

@@ -1,16 +1,8 @@
 <template>
     <div>
       <template v-for="(item, index) in items">
-        <div
-          class="divider"
-          v-if="item.type === 'divider'"
-          :key="`divider${index}`"
-        />
-        <MenuItem
-          v-else
-          :key="index"
-          v-bind="item"
-        />
+        <div class="divider" v-if="item.type === 'divider'" :key="`divider${index}`"/>
+        <MenuItem v-else :key="index" v-bind="item"/>
       </template>
     </div>
   </template>
@@ -84,6 +76,20 @@
       isActive: () => props.editor?.isActive('heading', { level: 4})
     },
     {
+      icon: 'h-5',
+      title: 'Heading 5',
+      action: () =>
+        props.editor?.chain().focus().toggleHeading({ level: 5 }).run(),
+      isActive: () => props.editor?.isActive('heading', { level: 5})
+    },
+    {
+      icon: 'h-6',
+      title: 'Heading 6',
+      action: () =>
+        props.editor?.chain().focus().toggleHeading({ level: 6 }).run(),
+      isActive: () => props.editor?.isActive('heading', { level: 6})
+    },
+    {
       icon: 'paragraph',
       title: 'Paragraph',
       action: () => props.editor?.chain().focus().setParagraph().run(),
@@ -145,6 +151,18 @@
       type: 'divider'
     },
     {
+      icon: 'image-line',
+      title: 'insertimage',
+      action: () => {const url = window.prompt('URL')
+        if (url) {
+          props.editor.chain().focus().setImage({ src: url }).run()
+        }
+      }
+    },
+    {
+      type: 'divider'
+    },
+    {
       icon: 'arrow-go-back-line',
       title: 'Undo',
       action: () => props.editor?.chain().focus().undo().run()
@@ -153,6 +171,27 @@
       icon: 'arrow-go-forward-line',
       title: 'Redo',
       action: () => props.editor?.chain().focus().redo().run()
+    }, 
+    { 
+      type: 'divider' 
+    }, 
+    { 
+      icon: 'table-2', 
+      title: '插入表格', 
+      action: () => 
+        props.editor.chain().focus() .insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() 
+    }, 
+    { 
+      icon: 'delete-bin-6-line', 
+      title: '删除表格', 
+      action: () => 
+        props.editor.chain().focus().deleteTable().run() 
+    }, 
+    { 
+      icon: 'merge-cells-horizontal', 
+      title: '合并拆分单元格', 
+      action: () => 
+        props.editor.chain().focus().mergeOrSplit().run() 
     }
   ]
   </script>
@@ -161,8 +200,8 @@
   .divider {
     background-color: rgba(#fff, 0.25);
     height: 1.25rem;
-    margin-left: 0.5rem;
-    margin-right: 0.75rem;
+    margin-left: 0;
+    margin-right: 0;
     width: 1px;
     display: inline-block;
   }

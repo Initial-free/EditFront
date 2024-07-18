@@ -1,191 +1,285 @@
 <template>
-    <div class="mainbody">
-      <h1 class="headtitle">首页</h1>
-      <div>
-        <h2 class="">{{ demoStore.helloPinia}}</h2>
-      </div>
-      
-      <div class="uploadimage">
-        <p class="commodity_img">
-              <!-- 上传图片
-                :class="boxdisplay"
-               -->
-              <el-upload
-                :on-success="handleSuccess"
-                list-type="picture-card"
-                :auto-upload="false"
-                :on-change="handleChanges"
-                :before-remove="beforeRemove"
-                :on-preview="handlePictureCardPreview"
-                :file-list="fileList "
-                multiple
-                limit="1"
-                name="img"
-              >
-                <el-icon class="avatar-uploader-icon">
-                  <Plus />
-                </el-icon>
-              </el-upload>
-          </p>
-  
-      <el-dialog v-model="dialogVisible">
-        <img w-full class="imageshow" :src="dialogImageUrl" alt="Preview Image" />
-      </el-dialog>
-    </div>
-    <el-button type="primary" @click="uploadimg">上传图片</el-button>
-    </div>
-  </template>
-  <script setup lang="ts">
-    import { mainStore} from '../../store/index'
-    /* 引入storeToRefs */
-    import { storeToRefs } from 'pinia'
-  
-    //storeToRefs只会关注sotre中数据，不会对方法进行ref包裹
-  
-    /* 得到countStore */
-    const demoStore =mainStore()
-  
-    import axios from 'axios'
-    //进行测试接口调用
-    const adduser=()=>{
-      let formData = new FormData();
-      formData.append("username","12345");
-      formData.append("password","54321");
-      let url = 'http://127.0.0.1:5000/adduser' //访问后端接口的url
-      let method = 'post'
-      axios({
-        method,
-        url,
-        data: formData,
-      }).then(res => {
-        // alert(res.data)
-        console.log("你好")
-      });
-    }
-    adduser()
-  
-    import { ref } from 'vue'
-    import { ElMessage } from 'element-plus';
-    import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue'
-  
-    import type { UploadFile } from 'element-plus'
-  
-    const dialogImageUrl = ref('')
-    const dialogVisible = ref(false)
-    const disabled = ref(false)
-  
-    const handleRemove = (file: UploadFile) => {
-      file.url = '';
-      file=null;
-    }
-  
-    const handlePictureCardPreview = (file: UploadFile) => {
-      dialogImageUrl.value = file.url!
-      dialogVisible.value = true
-    }
-  
-    const handleDownload = (file: UploadFile) => {
-     
-    }
-  
-    const boxdisplay = ref("show_box");
-  
-    const upload_btn = ref(false);
-    const fileList = ref([]);
-    const handleSuccess = () => {
-      // 上传成功后，隐藏上传按钮
-      upload_btn.value = true;
-    };
-    const handleChanges = img => {
-      fileList.value.push(img);
-      boxdisplay.value = "hide_box";
-    };
-    import {ElMessageBox} from 'element-plus'
-    // 删除
-    const beforeRemove = () => {
-      const result = new Promise<void>((resolve, reject) => {
-        ElMessageBox.confirm("此操作将删除该图片, 是否继续?", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning"
-        })
-          .then(() => {
-            boxdisplay.value = "show_box";
-            resolve();
-            fileList.value = [];
-            upload_btn.value = false;
-          })
-          .catch(() => {
-            reject(false);
-          });
-      });
-      return result;
-    };
-    const uploadimg = () => {
-      // alert("上传图片")
-      let formData = new FormData();
-        // 遍历fileList，为每个文件创建一个新的表单字段 
-      formData.append("username","12345");
-      fileList.value.forEach((file, index) => {  
-        // 假设后端期望的文件字段名为 'file[]' 以支持多文件上传  
-        // 如果后端只期望单个文件，则字段名可能只是 'file'  
-        // formData.append(`file[${index}]`, file.raw);  
-        formData.append("file",file.raw);
-        console.log(file.raw)
-      });  
-  
-      let url = 'http://127.0.0.1:5000/uploadimages' //访问后端接口的url
-      let method = 'post'
-      axios({
-          method,  
-          url,  
-          data: formData,  
-          headers: {  
-            'Content-Type': 'multipart/form-data' // 确保设置了正确的Content-Type  
-          }  
-      }).then(res => {
-          const result = new Promise((resolve, reject) => {
-                  resolve();
-                  fileList.value = [];
-                  upload_btn.value = false;
-                  ElMessage({ message: '图片上传成功', type: 'success' });  
-                })
-                .catch(() => {
-                  reject(false);
-                });
-            });
-    }
-  </script>
-  
-  <style scoped>
-  .mainbody {
-    position: relative;
-    width:100vw;
-    height: 100vh;
-    display: block;
+	<div class="center">
+		<div class="logon">
+			<div :class="overlaylong">
+				<div class="overlaylong-Signin" v-if="disfiex == 0">
+					<h2 class="overlaylongH2">登录</h2>
+          <div>
+            <el-input placeholder="请输入用户名" v-model="name" clearable class="input_style"></el-input>
+            <span v-if="error.name" class="err-msg">{{error.name}}</span>
+          </div>
+          <div>
+            <el-input placeholder="请输入密码" v-model="pwd" show-password class="input_style"></el-input>
+            <span v-if="error.pwd" class="err-msg">{{error.pwd}}</span>
+          </div>
+					<h3>Forgot your password?</h3>
+          <el-button type="primary"  @click="login()" class="inupbutton">Sign in</el-button>
+				</div>
+				<div class="overlaylong-Signup" v-if="disfiex == 1">
+					<h2 class="overlaylongH2">注册账户</h2>
+					<div>
+            <el-input placeholder="请输入用户名" v-model="name" clearable class="input_style"></el-input>
+            <span v-if="error.name" class="err-msg">{{error.name}}</span>
+          </div>
+          <div>
+            <el-input placeholder="请输入密码" v-model="pwd" show-password class="input_style"></el-input>
+            <span v-if="error.pwd" class="err-msg">{{error.pwd}}</span>
+          </div>
+          <el-button type="primary"  @click="login()" class="inupbutton">Sign up</el-button>
+				</div>
+ 
+			</div>
+			<div :class="overlaytitle">
+				<div class="overlaytitle-Signin" v-if="disfiex == 0">
+					<h2 class="overlaytitleH2">Hello,Friend!</h2>
+					<p class="overlaytitleP">
+						Enter your personal details and start journey with us
+					</p>
+					<div class="buttongohs" @click="Signin">Sign up</div>
+				</div>
+				<div class="overlaytitle-Signup" v-if="disfiex == 1">
+					<h2 class="overlaytitleH2">Welcome Back!</h2>
+					<p class="overlaytitleP">To keep connected with us please login with your personal info</p>
+					<div class="buttongohs" @click="Signup">Sign in</div>
+				</div>
+			</div>
+		</div>
+ 
+	</div>
+</template>
+ 
+<script>
+	export default {
+		data() {
+			return {
+				overlaylong: 'overlaylong',
+				overlaytitle: 'overlaytitle',
+				disfiex: 0,
+        name: '',
+        pwd : '',
+        error : {
+          name: '',
+          pwd : ''
+        }
+			}
+		},
+		methods: {
+			Signin() {
+				this.overlaylong = "overlaylongleft"
+				this.overlaytitle = "overlaytitleright"
+				setTimeout(() => {
+					this.disfiex = 1
+				}, 200)
+			},
+			Signup() {
+				this.overlaylong = "overlaylongright"
+				this.overlaytitle = "overlaytitleleft"
+ 
+				setTimeout(() => {
+					this.disfiex = 0
+				}, 200)
+ 
+			},
+      login(){
+        const { name, pwd, $router} = this
+        this.$router.push({
+          name: "Edit",
+          params: {
+            username: this.name
+          }
+        });
+      }
+		}
+	}
+</script>
+<style>
+	.center {
+		background-image: url('../../imgs/R-C.jpg');
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+    background-size: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100%;
+	}
+ 
+	h1 {
+		font-size: 30px;
+		color: black;
+	}
+ 
+	.logon {
+		background-color: #fff;
+		border-radius: 10px;
+		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+		position: relative;
+		overflow: hidden;
+		width: 768px;
+		max-width: 100%;
+		min-height: 480px;
+		margin-top: 20px;
+		display: flex;
+		background: -webkit-linear-gradient(right, #4284db, #29eac4);
+	}
+ 
+	.overlaylong {
+		border-radius: 10px 0 0 10px;
+		width: 50%;
+		height: 100%;
+		background-color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+ 
+	.overlaylongleft {
+		border-radius: 0px 10px 10px 0px;
+		width: 50%;
+		height: 100%;
+		background-color: #fff;
+		transform: translateX(100%);
+		transition: transform 0.6s ease-in-out;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+ 
+	.overlaylongright {
+		border-radius: 10px 0 0 10px;
+		width: 50%;
+		height: 100%;
+		background-color: #fff;
+		transform: translateX(0%);
+		transition: transform 0.6s ease-in-out;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+ 
+	.overlaytitle {
+		border-radius: 0px 10px 10px 0px;
+		width: 50%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+ 
+ 
+	.overlaytitleH2 {
+		font-size: 30px;
+		color: #fff;
+		margin-top: 20px;
+	}
+ 
+	.overlaytitleP {
+		font-size: 15px;
+		color: #fff;
+		margin-top: 20px;
+	}
+ 
+	.overlaytitleleft {
+		border-radius: 0px 10px 10px 0px;
+		width: 50%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transform: translateX(0%);
+		transition: transform 0.6s ease-in-out;
+	}
+ 
+	.overlaytitleright {
+		border-radius: 0px 10px 10px 0px;
+		width: 50%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transform: translateX(-100%);
+		transition: transform 0.6s ease-in-out;
+	}
+ 
+	.overlaytitle-Signin {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+	}
+ 
+	.overlaytitle-Signup {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+	}
+ 
+	.buttongohs {
+		width: 180px;
+		height: 40px;
+		border-radius: 50px;
+		border: 1px solid #fff;
+		color: #fff;
+		font-size: 15px;
+		text-align: center;
+		line-height: 40px;
+		margin-top: 40px;
+	}
+ 
+	.overlaylongH2 {
+		font-size: 25px;
+		color: black;
+		/* width: 250px; */
+	}
+	.overlaylong-Signin {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+	}
+ 
+	.overlaylong-Signup {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+	}
+ 
+	input {
+		background-color: #eee;
+		border: none;
+		padding: 12px 15px;
+		margin: 10px 0;
+		width: 240px;
+	}
+	h3{
+		font-size: 10px;
+		margin-top: 10px;
+		cursor: pointer;
+	}
+	.inupbutton{
+		background-color: #29eac4;
+		border: none;
+		border-radius: 50px;
+		font-size: 15px;
+		color: #fff;	
+		text-align: center;
+		line-height: 40px;
+		margin-top: 30px;
+	}
+  input[type="text"] {
+    background-color: #ffffff; /* 改变背景颜色 */
   }
-  .headtitle {
-    filter: drop-shadow(0 0 2em #646cffaa);
-    margin: 0;
+  .input_style{
+    width: 15rem;
+    margin-bottom: 1rem;
   }
-  </style>
-  <style lang="scss" scoped>
-  /* #在此处编写代码 */
-  .mainbody{
-    background: #76cfe5;
+  .login_style{
+    width: 200px;
   }
-  </style>
-  <style scoped>
-  .hide_box  {
-    display: none;
-  }
-  .show_box{
-    display: inline-flex;
-  }
-  .imageshow{
-    width: 100%;  
-    height: 100%;  
-    object-fit: fill; 
-  }
-  </style>
-  
+</style>

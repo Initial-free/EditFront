@@ -13,7 +13,7 @@ const routes = [
         path: '/Edit',
         name: 'Edit',
         component:() => import('../views/Edit/index.vue')
-    }
+    },
 ] as RouteRecordRaw[]
 const router = createRouter({
     history :createWebHistory(),

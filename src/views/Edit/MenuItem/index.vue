@@ -19,7 +19,7 @@
     action: Function
     isActive?: Function
       }>()
-        </script>
+    </script>
   
   <style lang="scss">
     .menu-item {
@@ -29,9 +29,9 @@
       color: #333;
       cursor: pointer;
       height: 1.75rem;
-      padding: 0.25rem;
-      margin-right: 0.25rem;
-      width: 1.75rem;
+      padding: 0.05rem;
+      margin-right: 0.15rem;
+      width: 1.45rem;
   
       svg {
         fill: currentColor;
